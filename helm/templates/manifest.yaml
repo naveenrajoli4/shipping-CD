@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shipping
+  namespace: rnk-roboshop
+data:
+  CART_ENDPOINT: "cart:8080"
+  DB_HOST: kdp-roboshop-prod-rds.cde2cce0q6fk.us-east-1.rds.amazonaws.com
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shipping
+  namespace: rnk-roboshop
+  labels: # these labels are deployment labels
+    app: shipping
+    project: roboshop
+    tier: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels: # these labels are used to find the pods
+      app: shipping
+      project: roboshop
+      tier: app
+  template:
+    metadata:
+      labels: # these labels are pod labels
+        app: shipping
+        project: roboshop
+        tier: app
+    spec:
+      containers:
+      - name: shipping
+        image: "{{ .Values.deployment.imageURL }}:{{ .Values.deployment.imageVersion }}"
+        imagePullPolicy: Always
+        envFrom:
+        - configMapRef:
+            name: shipping
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shipping
+  namespace: rnk-roboshop
+spec:
+  selector:
+    app: shipping
+    project: roboshop
+    tier: app
+  ports:
+  - protocol: TCP
+    port: 8080 #service-port
+    targetPort: 8080 #container-port
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+ name: shipping
+ namespace: rnk-roboshop
+spec:
+ scaleTargetRef:
+   apiVersion: apps/v1
+   kind: Deployment
+   name: shipping
+ minReplicas: 1
+ maxReplicas: 10
+ targetCPUUtilizationPercentage: {{ .Values.hpa.cpuUtilization }} # usually 75 in real environment
