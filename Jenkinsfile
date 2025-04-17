@@ -13,7 +13,7 @@ pipeline {
         string(name: 'jira-id',  description: 'Enter your jira id')
     }
     environment {
-        appVersion = '' // this will become global, we can use across pipeline
+        appversion = '' // this will become global, we can use across pipeline
         region = 'us-east-1'
         account_id = ''
         project = 'roboshop'
@@ -27,7 +27,7 @@ pipeline {
             steps{
                 script{
                     environment = params.ENVIRONMENT
-                    appVersion = params.version
+                    appversion = params.version
                     account_id = pipelineGlobals.getAccountID(environment)
                 }
             }
@@ -64,7 +64,7 @@ pipeline {
                     sh """
                         aws eks update-kubeconfig --region ${region} --name kdp-${project}-${environment}-eks
                         cd helm
-                        sed -i 's/IMAGE_VERSION/${appVersion}/g' values-${environment}.yaml
+                        sed -i 's/IMAGE_VERSION/${appversion}/g' values-${environment}.yaml
                         helm upgrade --install ${component} -n rnk-${project} -f values-${environment}.yaml .
                     """
                 }
